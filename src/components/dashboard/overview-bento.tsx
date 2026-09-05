@@ -1,4 +1,20 @@
-import { TIME_RANGES, type TimeRange } from "@/lib/coingecko";
+import Image from "next/image";
+import type {
+  CoinMarket,
+  GlobalMarketData,
+  MarketChart,
+  TimeRange,
+} from "@/lib/coingecko";
+import { TIME_RANGES } from "@/lib/coingecko";
+import {
+  changeToneClass,
+  formatChartTick,
+  formatCompactUsd,
+  formatInteger,
+  formatPercent,
+  formatSharePercent,
+  formatUsd,
+} from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,30 +25,99 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  BitcoinPriceChart,
+  MarketDominanceChart,
+  VolumeLeadersChart,
+} from "@/components/dashboard/overview-charts";
 
-const KPI_CARDS = [
-  { title: "Market Cap", hint: "Global USD" },
-  { title: "24h Volume", hint: "Spot markets" },
-  { title: "BTC Dominance", hint: "Share of cap" },
-  { title: "Active Coins", hint: "Listed assets" },
-] as const;
+export type OverviewBentoProps = {
+  global: GlobalMarketData;
+  coins: CoinMarket[];
+  bitcoinChart: MarketChart;
+  chartRange: TimeRange;
+};
 
-const DEFAULT_RANGE: TimeRange = "24h";
+function buildDominanceSlices(percentages: Record<string, number>) {
+  const ranked = Object.entries(percentages).sort((a, b) => b[1] - a[1]);
+  const top = ranked.slice(0, 5);
+  const rest = ranked.slice(5).reduce((sum, [, value]) => sum + value, 0);
 
-export function OverviewBento() {
+  return [
+    ...top.map(([name, value]) => ({ name, value })),
+    ...(rest > 0 ? [{ name: "others", value: rest }] : []),
+  ];
+}
+
+export function OverviewBento({
+  global,
+  coins,
+  bitcoinChart,
+  chartRange,
+}: OverviewBentoProps) {
+  const marketCapUsd = global.total_market_cap.usd ?? 0;
+  const volumeUsd = global.total_volume.usd ?? 0;
+  const btcDominance = global.market_cap_percentage.btc ?? 0;
+  const bitcoin = coins.find((coin) => coin.id === "bitcoin");
+
+  const kpis = [
+    {
+      title: "Market Cap",
+      hint: "Global USD",
+      value: formatCompactUsd(marketCapUsd),
+      change: global.market_cap_change_percentage_24h_usd,
+    },
+    {
+      title: "24h Volume",
+      hint: "Spot markets",
+      value: formatCompactUsd(volumeUsd),
+    },
+    {
+      title: "BTC Dominance",
+      hint: "Share of cap",
+      value: formatSharePercent(btcDominance),
+    },
+    {
+      title: "Active Coins",
+      hint: "Listed assets",
+      value: formatInteger(global.active_cryptocurrencies),
+    },
+  ] as const;
+
+  const priceSeries = bitcoinChart.prices.map((point) => ({
+    timestamp: point.timestamp,
+    price: point.value,
+    label: formatChartTick(point.timestamp, chartRange),
+  }));
+
+  const volumeSeries = [...coins]
+    .sort((a, b) => b.total_volume - a.total_volume)
+    .slice(0, 8)
+    .map((coin) => ({
+      symbol: coin.symbol.toUpperCase(),
+      volume: coin.total_volume,
+    }));
+
+  const dominanceSlices = buildDominanceSlices(global.market_cap_percentage);
+
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-8">
-      {KPI_CARDS.map((kpi) => (
+      {kpis.map((kpi) => (
         <Card key={kpi.title} size="sm" className="xl:col-span-2">
           <CardHeader>
             <CardDescription>{kpi.title}</CardDescription>
-            <CardTitle className="font-heading text-2xl tracking-tight">
-              <Skeleton className="h-8 w-28" />
+            <CardTitle className="font-heading text-2xl tracking-tight tabular-nums">
+              {kpi.value}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">{kpi.hint}</p>
+            {"change" in kpi ? (
+              <p className={`text-xs tabular-nums ${changeToneClass(kpi.change)}`}>
+                {formatPercent(kpi.change)} 24h
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">{kpi.hint}</p>
+            )}
           </CardContent>
         </Card>
       ))}
@@ -41,7 +126,9 @@ export function OverviewBento() {
         <CardHeader className="border-b">
           <CardTitle>Bitcoin price</CardTitle>
           <CardDescription>
-            Interactive series — CoinGecko market chart
+            {bitcoin
+              ? `${formatUsd(bitcoin.current_price)} · last ${chartRange}`
+              : `Interactive series · last ${chartRange}`}
           </CardDescription>
           <CardAction>
             <div className="flex items-center gap-1">
@@ -50,8 +137,8 @@ export function OverviewBento() {
                   key={range}
                   type="button"
                   size="xs"
-                  variant={range === DEFAULT_RANGE ? "secondary" : "ghost"}
-                  aria-pressed={range === DEFAULT_RANGE}
+                  variant={range === chartRange ? "secondary" : "ghost"}
+                  aria-pressed={range === chartRange}
                 >
                   {range.toUpperCase()}
                 </Button>
@@ -60,14 +147,7 @@ export function OverviewBento() {
           </CardAction>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="flex h-64 flex-col justify-end gap-3 rounded-lg bg-muted/40 p-4">
-            <Skeleton className="h-40 w-full rounded-md" />
-            <div className="flex justify-between">
-              <Skeleton className="h-3 w-10" />
-              <Skeleton className="h-3 w-10" />
-              <Skeleton className="h-3 w-10" />
-            </div>
-          </div>
+          <BitcoinPriceChart data={priceSeries} />
         </CardContent>
       </Card>
 
@@ -77,15 +157,7 @@ export function OverviewBento() {
           <CardDescription>24h spot volume by asset</CardDescription>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="flex h-64 items-end gap-2 rounded-lg bg-muted/40 p-4">
-            {Array.from({ length: 7 }, (_, index) => (
-              <Skeleton
-                key={index}
-                className="w-full rounded-sm"
-                style={{ height: `${36 + ((index * 17) % 48)}%` }}
-              />
-            ))}
-          </div>
+          <VolumeLeadersChart data={volumeSeries} />
         </CardContent>
       </Card>
 
@@ -98,18 +170,35 @@ export function OverviewBento() {
           </CardAction>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="space-y-3">
-            {Array.from({ length: 6 }, (_, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <Skeleton className="size-8 rounded-full" />
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
-                <Skeleton className="h-3 w-16" />
-              </div>
-            ))}
-          </div>
+          <ul className="space-y-3">
+            {coins.slice(0, 6).map((coin) => {
+              const change = coin.price_change_percentage_24h ?? 0;
+
+              return (
+                <li key={coin.id} className="flex items-center gap-3">
+                  <Image
+                    src={coin.image}
+                    alt={coin.name}
+                    width={32}
+                    height={32}
+                    className="size-8 rounded-full"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{coin.name}</p>
+                    <p className="text-xs uppercase text-muted-foreground">
+                      {coin.symbol}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm tabular-nums">{formatUsd(coin.current_price)}</p>
+                    <p className={`text-xs tabular-nums ${changeToneClass(change)}`}>
+                      {formatPercent(change)}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </CardContent>
       </Card>
 
@@ -119,9 +208,7 @@ export function OverviewBento() {
           <CardDescription>Share of global market cap</CardDescription>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="flex h-64 items-center justify-center rounded-lg bg-muted/40">
-            <Skeleton className="size-40 rounded-full" />
-          </div>
+          <MarketDominanceChart data={dominanceSlices} />
         </CardContent>
       </Card>
     </div>

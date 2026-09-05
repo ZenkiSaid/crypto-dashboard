@@ -1,3 +1,6 @@
 allowBuilds:
   sharp: false
   unrs-resolver: false
+
+overrides:
+  react-is: 19.2.8

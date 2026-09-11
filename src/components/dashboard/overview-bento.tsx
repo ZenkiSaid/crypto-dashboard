@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type {
   CoinMarket,
   GlobalMarketData,
@@ -11,18 +10,16 @@ import {
   formatInteger,
   formatPercent,
   formatSharePercent,
-  formatUsd,
 } from "@/lib/format";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { BitcoinPriceCard } from "@/components/dashboard/bitcoin-price-card";
+import { TopMarketsCard } from "@/components/dashboard/top-markets-card";
 import {
   MarketDominanceChart,
   VolumeLeadersChart,
@@ -129,46 +126,7 @@ export function OverviewBento({
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-2 xl:col-span-5">
-        <CardHeader className="border-b">
-          <CardTitle>Top markets</CardTitle>
-          <CardDescription>Price, volume, and market cap</CardDescription>
-          <CardAction>
-            <Badge variant="secondary">USD</Badge>
-          </CardAction>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <ul className="space-y-3">
-            {coins.slice(0, 6).map((coin) => {
-              const change = coin.price_change_percentage_24h ?? 0;
-
-              return (
-                <li key={coin.id} className="flex items-center gap-3">
-                  <Image
-                    src={coin.image}
-                    alt={coin.name}
-                    width={32}
-                    height={32}
-                    className="size-8 rounded-full"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{coin.name}</p>
-                    <p className="text-xs uppercase text-muted-foreground">
-                      {coin.symbol}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm tabular-nums">{formatUsd(coin.current_price)}</p>
-                    <p className={`text-xs tabular-nums ${changeToneClass(change)}`}>
-                      {formatPercent(change)}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </CardContent>
-      </Card>
+      <TopMarketsCard coins={coins} />
 
       <Card className="xl:col-span-3">
         <CardHeader className="border-b">

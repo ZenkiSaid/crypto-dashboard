@@ -1,5 +1,5 @@
+import { Suspense } from "react";
 import {
-  CoinGeckoError,
   getCoinsMarkets,
   getGlobalMarket,
   getMarketChart,
@@ -7,13 +7,7 @@ import {
   type TimeRange,
 } from "@/lib/coingecko";
 import { OverviewBento } from "@/components/dashboard/overview-bento";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { OverviewBentoSkeleton } from "@/components/dashboard/overview-skeleton";
 
 export const revalidate = 60;
 
@@ -23,7 +17,15 @@ export type OverviewPageProps = {
   searchParams?: Promise<{ range?: string }>;
 };
 
-export default async function OverviewPage({ searchParams }: OverviewPageProps) {
+export default function OverviewPage({ searchParams }: OverviewPageProps) {
+  return (
+    <Suspense fallback={<OverviewBentoSkeleton />}>
+      <OverviewDashboard searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function OverviewDashboard({ searchParams }: OverviewPageProps) {
   const resolvedParams = searchParams ? await searchParams : undefined;
   const requestedRange = resolvedParams?.range;
   const chartRange: TimeRange =
@@ -31,47 +33,22 @@ export default async function OverviewPage({ searchParams }: OverviewPageProps) 
       ? (requestedRange as TimeRange)
       : DEFAULT_RANGE;
 
-  try {
-    const [global, coins, bitcoinChart] = await Promise.all([
-      getGlobalMarket(),
-      getCoinsMarkets({ perPage: 8 }),
-      getMarketChart({ coinId: "bitcoin", range: chartRange }),
-    ]);
+  const [global, coins, bitcoinChart] = await Promise.all([
+    getGlobalMarket(),
+    getCoinsMarkets({ perPage: 12 }),
+    getMarketChart({ coinId: "bitcoin", range: chartRange }),
+  ]);
 
-    if (!global.data || coins.length === 0 || bitcoinChart.prices.length === 0) {
-      throw new Error("CoinGecko returned an incomplete payload.");
-    }
-
-    return (
-      <OverviewBento
-        global={global.data}
-        coins={coins}
-        bitcoinChart={bitcoinChart}
-        chartRange={chartRange}
-      />
-    );
-  } catch (error) {
-    const message =
-      error instanceof CoinGeckoError
-        ? `CoinGecko returned ${error.status} for ${error.path}.`
-        : "Market data is unavailable right now.";
-
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Unable to load markets</CardTitle>
-          <CardDescription>{message}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            The public CoinGecko API is rate-limited. Retry in a minute, or add{" "}
-            <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs">
-              COINGECKO_API_KEY
-            </code>{" "}
-            in <code className="font-mono text-xs">.env.local</code>.
-          </p>
-        </CardContent>
-      </Card>
-    );
+  if (!global.data || coins.length === 0 || bitcoinChart.prices.length === 0) {
+    throw new Error("CoinGecko returned an incomplete or empty payload.");
   }
+
+  return (
+    <OverviewBento
+      global={global.data}
+      coins={coins}
+      bitcoinChart={bitcoinChart}
+      chartRange={chartRange}
+    />
+  );
 }

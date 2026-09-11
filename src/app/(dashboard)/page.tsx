@@ -3,6 +3,8 @@ import {
   getCoinsMarkets,
   getGlobalMarket,
   getMarketChart,
+  TIME_RANGES,
+  type TimeRange,
 } from "@/lib/coingecko";
 import { OverviewBento } from "@/components/dashboard/overview-bento";
 import {
@@ -15,14 +17,25 @@ import {
 
 export const revalidate = 60;
 
-const CHART_RANGE = "7d" as const;
+const DEFAULT_RANGE: TimeRange = "7d";
 
-export default async function OverviewPage() {
+export type OverviewPageProps = {
+  searchParams?: Promise<{ range?: string }>;
+};
+
+export default async function OverviewPage({ searchParams }: OverviewPageProps) {
+  const resolvedParams = searchParams ? await searchParams : undefined;
+  const requestedRange = resolvedParams?.range;
+  const chartRange: TimeRange =
+    requestedRange && TIME_RANGES.includes(requestedRange as TimeRange)
+      ? (requestedRange as TimeRange)
+      : DEFAULT_RANGE;
+
   try {
     const [global, coins, bitcoinChart] = await Promise.all([
       getGlobalMarket(),
       getCoinsMarkets({ perPage: 8 }),
-      getMarketChart({ coinId: "bitcoin", range: CHART_RANGE }),
+      getMarketChart({ coinId: "bitcoin", range: chartRange }),
     ]);
 
     if (!global.data || coins.length === 0 || bitcoinChart.prices.length === 0) {
@@ -34,7 +47,7 @@ export default async function OverviewPage() {
         global={global.data}
         coins={coins}
         bitcoinChart={bitcoinChart}
-        chartRange={CHART_RANGE}
+        chartRange={chartRange}
       />
     );
   } catch (error) {

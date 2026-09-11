@@ -5,10 +5,8 @@ import type {
   MarketChart,
   TimeRange,
 } from "@/lib/coingecko";
-import { TIME_RANGES } from "@/lib/coingecko";
 import {
   changeToneClass,
-  formatChartTick,
   formatCompactUsd,
   formatInteger,
   formatPercent,
@@ -16,7 +14,6 @@ import {
   formatUsd,
 } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -25,8 +22,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { BitcoinPriceCard } from "@/components/dashboard/bitcoin-price-card";
 import {
-  BitcoinPriceChart,
   MarketDominanceChart,
   VolumeLeadersChart,
 } from "@/components/dashboard/overview-charts";
@@ -84,12 +81,6 @@ export function OverviewBento({
     },
   ] as const;
 
-  const priceSeries = bitcoinChart.prices.map((point) => ({
-    timestamp: point.timestamp,
-    price: point.value,
-    label: formatChartTick(point.timestamp, chartRange),
-  }));
-
   const volumeSeries = [...coins]
     .sort((a, b) => b.total_volume - a.total_volume)
     .slice(0, 8)
@@ -122,34 +113,11 @@ export function OverviewBento({
         </Card>
       ))}
 
-      <Card className="md:col-span-2 xl:col-span-5">
-        <CardHeader className="border-b">
-          <CardTitle>Bitcoin price</CardTitle>
-          <CardDescription>
-            {bitcoin
-              ? `${formatUsd(bitcoin.current_price)} · last ${chartRange}`
-              : `Interactive series · last ${chartRange}`}
-          </CardDescription>
-          <CardAction>
-            <div className="flex items-center gap-1">
-              {TIME_RANGES.map((range) => (
-                <Button
-                  key={range}
-                  type="button"
-                  size="xs"
-                  variant={range === chartRange ? "secondary" : "ghost"}
-                  aria-pressed={range === chartRange}
-                >
-                  {range.toUpperCase()}
-                </Button>
-              ))}
-            </div>
-          </CardAction>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <BitcoinPriceChart data={priceSeries} />
-        </CardContent>
-      </Card>
+      <BitcoinPriceCard
+        initialChart={bitcoinChart}
+        initialRange={chartRange}
+        bitcoin={bitcoin}
+      />
 
       <Card className="xl:col-span-3">
         <CardHeader className="border-b">

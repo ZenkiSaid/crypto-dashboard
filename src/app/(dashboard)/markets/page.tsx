@@ -1,30 +1,27 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense } from "react";
+import { getCoinsMarkets } from "@/lib/coingecko";
+import { MarketsTable } from "@/components/markets/markets-table";
+import { MarketsSkeleton } from "@/components/markets/markets-skeleton";
+
+export const revalidate = 60;
 
 export default function MarketsPage() {
   return (
-    <Card>
-      <CardHeader className="border-b">
-        <CardTitle>Markets</CardTitle>
-        <CardDescription>
-          Ranked assets from CoinGecko — table wiring comes next
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3 pt-4">
-        {Array.from({ length: 8 }, (_, index) => (
-          <div key={index} className="flex items-center gap-3">
-            <Skeleton className="size-8 rounded-full" />
-            <Skeleton className="h-4 flex-1" />
-            <Skeleton className="h-4 w-20" />
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+    <Suspense fallback={<MarketsSkeleton />}>
+      <MarketsContent />
+    </Suspense>
   );
+}
+
+async function MarketsContent() {
+  const coins = await getCoinsMarkets({
+    perPage: 50,
+    sparkline: true,
+  });
+
+  if (!coins || coins.length === 0) {
+    throw new Error("CoinGecko returned an empty list of market assets.");
+  }
+
+  return <MarketsTable coins={coins} />;
 }

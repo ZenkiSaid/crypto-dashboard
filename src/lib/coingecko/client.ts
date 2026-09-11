@@ -88,6 +88,7 @@ export async function getCoinsMarkets({
   perPage = 10,
   page = 1,
   sparkline = true,
+  ids,
 }: GetCoinsMarketsParams = {}): Promise<CoinMarket[]> {
   return coingeckoFetch<CoinMarket[]>("/coins/markets", {
     vs_currency: vsCurrency,
@@ -96,6 +97,7 @@ export async function getCoinsMarkets({
     page,
     sparkline,
     price_change_percentage: "24h,7d,30d",
+    ids: ids && ids.length > 0 ? ids.join(",") : undefined,
   });
 }
 

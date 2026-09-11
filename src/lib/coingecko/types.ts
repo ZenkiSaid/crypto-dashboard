@@ -75,6 +75,7 @@ export type GetCoinsMarketsParams = {
   perPage?: number;
   page?: number;
   sparkline?: boolean;
+  ids?: string[];
 };
 
 export type GetMarketChartParams = {

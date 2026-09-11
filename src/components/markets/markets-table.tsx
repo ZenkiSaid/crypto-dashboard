@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Sparkline } from "@/components/markets/sparkline";
+import { FavoriteButton } from "@/components/watchlist/favorite-button";
 
 export type MarketsTableProps = {
   coins: CoinMarket[];
@@ -221,7 +222,10 @@ export function MarketsTable({ coins }: MarketsTableProps) {
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-muted/30 text-xs text-muted-foreground font-medium select-none">
               <tr>
-                <th className="py-3 pl-4 pr-2 w-12 text-center">
+                <th className="py-3 pl-3 pr-1 w-8 text-center">
+                  <span className="sr-only">Watchlist</span>
+                </th>
+                <th className="py-3 px-2 w-10 text-center">
                   <button
                     type="button"
                     onClick={() => handleSort("rank")}
@@ -310,8 +314,13 @@ export function MarketsTable({ coins }: MarketsTableProps) {
                       key={coin.id}
                       className="hover:bg-muted/40 transition-colors"
                     >
+                      {/* Watchlist Favorite Toggle */}
+                      <td className="py-3.5 pl-3 pr-1 text-center">
+                        <FavoriteButton coinId={coin.id} coinName={coin.name} />
+                      </td>
+
                       {/* Rank */}
-                      <td className="py-3.5 pl-4 pr-2 text-center font-mono text-xs text-muted-foreground">
+                      <td className="py-3.5 px-2 text-center font-mono text-xs text-muted-foreground">
                         {coin.market_cap_rank ?? "-"}
                       </td>
 
@@ -387,7 +396,7 @@ export function MarketsTable({ coins }: MarketsTableProps) {
               ) : (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="py-12 text-center text-muted-foreground"
                   >
                     <p className="text-sm">

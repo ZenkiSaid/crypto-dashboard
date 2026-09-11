@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { FavoriteButton } from "@/components/watchlist/favorite-button";
 
 export type TopMarketsCardProps = {
   coins: CoinMarket[];
@@ -150,8 +151,9 @@ export function TopMarketsCard({ coins }: TopMarketsCardProps) {
               return (
                 <li
                   key={coin.id}
-                  className="hover:bg-muted/40 -mx-2 flex items-center gap-3 rounded-lg px-2 py-2 transition-colors first:pt-1 last:pb-0"
+                  className="hover:bg-muted/40 -mx-2 flex items-center gap-2 rounded-lg px-2 py-2 transition-colors first:pt-1 last:pb-0"
                 >
+                  <FavoriteButton coinId={coin.id} coinName={coin.name} size="icon-xs" />
                   <Image
                     src={coin.image}
                     alt={coin.name}

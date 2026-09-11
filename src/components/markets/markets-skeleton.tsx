@@ -37,7 +37,10 @@ export function MarketsSkeleton() {
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-muted/30 text-xs text-muted-foreground">
               <tr>
-                <th className="py-3 pl-4 pr-2 w-12 text-center">#</th>
+                <th className="py-3 pl-3 pr-1 w-8 text-center">
+                  <Skeleton className="mx-auto size-3.5 rounded" />
+                </th>
+                <th className="py-3 px-2 w-10 text-center">#</th>
                 <th className="py-3 px-3">Asset</th>
                 <th className="py-3 px-3 text-right">Price</th>
                 <th className="py-3 px-3 text-right">24h %</th>
@@ -50,7 +53,10 @@ export function MarketsSkeleton() {
             <tbody className="divide-y divide-border/40">
               {Array.from({ length: 10 }, (_, i) => (
                 <tr key={i} className="animate-pulse">
-                  <td className="py-4 pl-4 pr-2 text-center">
+                  <td className="py-4 pl-3 pr-1 text-center">
+                    <Skeleton className="mx-auto size-3.5 rounded" />
+                  </td>
+                  <td className="py-4 px-2 text-center">
                     <Skeleton className="mx-auto h-3.5 w-4" />
                   </td>
                   <td className="py-4 px-3">

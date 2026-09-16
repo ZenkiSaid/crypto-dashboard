@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import {
   getCoinsMarkets,
   getGlobalMarket,
@@ -6,6 +7,7 @@ import {
   TIME_RANGES,
   type TimeRange,
 } from "@/lib/coingecko";
+import { SUPPORTED_CURRENCIES, type Currency } from "@/lib/format";
 import { OverviewBento } from "@/components/dashboard/overview-bento";
 import { OverviewBentoSkeleton } from "@/components/dashboard/overview-skeleton";
 
@@ -26,6 +28,13 @@ export default function OverviewPage({ searchParams }: OverviewPageProps) {
 }
 
 async function OverviewDashboard({ searchParams }: OverviewPageProps) {
+  const cookieStore = await cookies();
+  const rawCurrency = cookieStore.get("crypto_currency")?.value;
+  const currency: Currency =
+    rawCurrency && SUPPORTED_CURRENCIES.includes(rawCurrency as Currency)
+      ? (rawCurrency as Currency)
+      : "usd";
+
   const resolvedParams = searchParams ? await searchParams : undefined;
   const requestedRange = resolvedParams?.range;
   const chartRange: TimeRange =
@@ -35,8 +44,12 @@ async function OverviewDashboard({ searchParams }: OverviewPageProps) {
 
   const [global, coins, bitcoinChart] = await Promise.all([
     getGlobalMarket(),
-    getCoinsMarkets({ perPage: 12 }),
-    getMarketChart({ coinId: "bitcoin", range: chartRange }),
+    getCoinsMarkets({ perPage: 12, vsCurrency: currency }),
+    getMarketChart({
+      coinId: "bitcoin",
+      range: chartRange,
+      vsCurrency: currency,
+    }),
   ]);
 
   if (!global.data || coins.length === 0 || bitcoinChart.prices.length === 0) {
@@ -49,6 +62,7 @@ async function OverviewDashboard({ searchParams }: OverviewPageProps) {
       coins={coins}
       bitcoinChart={bitcoinChart}
       chartRange={chartRange}
+      currency={currency}
     />
   );
 }

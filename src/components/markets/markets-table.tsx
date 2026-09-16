@@ -14,9 +14,10 @@ import {
 import type { CoinMarket } from "@/lib/coingecko";
 import {
   changeToneClass,
-  formatCompactUsd,
+  formatCompactCurrency,
+  formatCurrency,
   formatPercent,
-  formatUsd,
+  type Currency,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -32,9 +33,11 @@ import { Input } from "@/components/ui/input";
 import { Sparkline } from "@/components/markets/sparkline";
 import { FavoriteButton } from "@/components/watchlist/favorite-button";
 import { useCoinDetail } from "@/context/coin-detail-context";
+import { useCurrency } from "@/context/currency-context";
 
 export type MarketsTableProps = {
   coins: CoinMarket[];
+  currency?: Currency;
 };
 
 type SortColumn =
@@ -48,8 +51,10 @@ type SortColumn =
 
 type SortDirection = "asc" | "desc";
 
-export function MarketsTable({ coins }: MarketsTableProps) {
+export function MarketsTable({ coins, currency }: MarketsTableProps) {
   const { openCoinDetail } = useCoinDetail();
+  const { currency: contextCurrency } = useCurrency();
+  const activeCurrency = currency ?? contextCurrency;
   const [searchQuery, setSearchQuery] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn>("rank");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -161,6 +166,9 @@ export function MarketsTable({ coins }: MarketsTableProps) {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <Badge variant="outline" className="font-mono text-xs uppercase">
+              {activeCurrency}
+            </Badge>
             <Badge variant="secondary" className="font-mono text-xs">
               {coins.length} Assets
             </Badge>
@@ -350,7 +358,7 @@ export function MarketsTable({ coins }: MarketsTableProps) {
 
                       {/* Current Price */}
                       <td className="py-3.5 px-3 text-right font-medium tabular-nums text-sm">
-                        {formatUsd(coin.current_price)}
+                        {formatCurrency(coin.current_price, activeCurrency)}
                       </td>
 
                       {/* 24h Change */}
@@ -375,12 +383,12 @@ export function MarketsTable({ coins }: MarketsTableProps) {
 
                       {/* 24h Volume */}
                       <td className="py-3.5 px-3 text-right font-mono text-xs tabular-nums text-muted-foreground hidden lg:table-cell">
-                        {formatCompactUsd(coin.total_volume)}
+                        {formatCompactCurrency(coin.total_volume, activeCurrency)}
                       </td>
 
                       {/* Market Cap */}
                       <td className="py-3.5 px-3 text-right font-mono text-xs tabular-nums text-muted-foreground hidden sm:table-cell">
-                        {formatCompactUsd(coin.market_cap)}
+                        {formatCompactCurrency(coin.market_cap, activeCurrency)}
                       </td>
 
                       {/* Sparkline */}

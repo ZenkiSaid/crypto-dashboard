@@ -6,10 +6,11 @@ import type {
 } from "@/lib/coingecko";
 import {
   changeToneClass,
-  formatCompactUsd,
+  formatCompactCurrency,
   formatInteger,
   formatPercent,
   formatSharePercent,
+  type Currency,
 } from "@/lib/format";
 import {
   Card,
@@ -30,6 +31,7 @@ export type OverviewBentoProps = {
   coins: CoinMarket[];
   bitcoinChart: MarketChart;
   chartRange: TimeRange;
+  currency?: Currency;
 };
 
 function buildDominanceSlices(percentages: Record<string, number>) {
@@ -48,23 +50,26 @@ export function OverviewBento({
   coins,
   bitcoinChart,
   chartRange,
+  currency = "usd",
 }: OverviewBentoProps) {
-  const marketCapUsd = global.total_market_cap.usd ?? 0;
-  const volumeUsd = global.total_volume.usd ?? 0;
+  const marketCap =
+    global.total_market_cap[currency] ?? global.total_market_cap.usd ?? 0;
+  const volume =
+    global.total_volume[currency] ?? global.total_volume.usd ?? 0;
   const btcDominance = global.market_cap_percentage.btc ?? 0;
   const bitcoin = coins.find((coin) => coin.id === "bitcoin");
 
   const kpis = [
     {
       title: "Market Cap",
-      hint: "Global USD",
-      value: formatCompactUsd(marketCapUsd),
+      hint: `Global ${currency.toUpperCase()}`,
+      value: formatCompactCurrency(marketCap, currency),
       change: global.market_cap_change_percentage_24h_usd,
     },
     {
       title: "24h Volume",
       hint: "Spot markets",
-      value: formatCompactUsd(volumeUsd),
+      value: formatCompactCurrency(volume, currency),
     },
     {
       title: "BTC Dominance",
@@ -114,6 +119,7 @@ export function OverviewBento({
         initialChart={bitcoinChart}
         initialRange={chartRange}
         bitcoin={bitcoin}
+        currency={currency}
       />
 
       <Card className="xl:col-span-3">
@@ -122,11 +128,11 @@ export function OverviewBento({
           <CardDescription>24h spot volume by asset</CardDescription>
         </CardHeader>
         <CardContent className="pt-4">
-          <VolumeLeadersChart data={volumeSeries} />
+          <VolumeLeadersChart data={volumeSeries} currency={currency} />
         </CardContent>
       </Card>
 
-      <TopMarketsCard coins={coins} />
+      <TopMarketsCard coins={coins} currency={currency} />
 
       <Card className="xl:col-span-3">
         <CardHeader className="border-b">

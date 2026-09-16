@@ -16,12 +16,14 @@ import {
 import {
   changeToneClass,
   formatChartTick,
-  formatCompactUsd,
+  formatCompactCurrency,
+  formatCompactNumber,
+  formatCurrency,
   formatPercent,
-  formatUsd,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useCoinDetail } from "@/context/coin-detail-context";
+import { useCurrency } from "@/context/currency-context";
 import { fetchMarketChartAction } from "@/actions/market-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +40,7 @@ import { CoinPriceChart } from "@/components/dashboard/overview-charts";
 
 export function CoinDetailSheet() {
   const { selectedCoin, isOpen, closeCoinDetail } = useCoinDetail();
+  const { currency } = useCurrency();
   const [activeRange, setActiveRange] = useState<TimeRange>("7d");
   const [chartCache, setChartCache] = useState<
     Record<string, Partial<Record<TimeRange, MarketChart>>>
@@ -47,13 +50,14 @@ export function CoinDetailSheet() {
   const [isPending, startTransition] = useTransition();
 
   const coinId = selectedCoin?.id;
+  const cacheKey = coinId ? `${coinId}_${currency}` : "";
 
-  // Fetch chart when coin changes or activeRange changes
+  // Fetch chart when coin changes, activeRange changes, or currency changes
   useEffect(() => {
-    if (!coinId || !isOpen) return;
+    if (!coinId || !isOpen || !cacheKey) return;
 
-    // Check if already cached in memory for this coin + range
-    if (chartCache[coinId]?.[activeRange]) {
+    // Check if already cached in memory for this coin + currency + range
+    if (chartCache[cacheKey]?.[activeRange]) {
       return;
     }
 
@@ -61,15 +65,15 @@ export function CoinDetailSheet() {
     setIsLoadingChart(true);
     setChartError(null);
 
-    fetchMarketChartAction(coinId, activeRange).then((result) => {
+    fetchMarketChartAction(coinId, activeRange, currency).then((result) => {
       if (!isMounted) return;
       setIsLoadingChart(false);
 
       if (result.success) {
         setChartCache((prev) => ({
           ...prev,
-          [coinId]: {
-            ...prev[coinId],
+          [cacheKey]: {
+            ...prev[cacheKey],
             [activeRange]: result.data,
           },
         }));
@@ -81,9 +85,9 @@ export function CoinDetailSheet() {
     return () => {
       isMounted = false;
     };
-  }, [coinId, activeRange, isOpen, chartCache]);
+  }, [coinId, activeRange, isOpen, chartCache, currency, cacheKey]);
 
-  const currentChart = coinId ? chartCache[coinId]?.[activeRange] : undefined;
+  const currentChart = cacheKey ? chartCache[cacheKey]?.[activeRange] : undefined;
 
   const priceSeries = useMemo(() => {
     if (!currentChart?.prices) return [];
@@ -164,7 +168,7 @@ export function CoinDetailSheet() {
             {/* Price & 24h Change */}
             <div className="mt-4 flex items-baseline gap-3">
               <span className="font-heading text-3xl font-semibold tracking-tight tabular-nums">
-                {formatUsd(selectedCoin.current_price)}
+                {formatCurrency(selectedCoin.current_price, currency)}
               </span>
               <span
                 className={cn(
@@ -232,14 +236,14 @@ export function CoinDetailSheet() {
                     variant="outline"
                     onClick={() => {
                       setIsLoadingChart(true);
-                      fetchMarketChartAction(selectedCoin.id, activeRange).then(
+                      fetchMarketChartAction(selectedCoin.id, activeRange, currency).then(
                         (res) => {
                           setIsLoadingChart(false);
                           if (res.success) {
                             setChartCache((prev) => ({
                               ...prev,
-                              [selectedCoin.id]: {
-                                ...prev[selectedCoin.id],
+                              [cacheKey]: {
+                                ...prev[cacheKey],
                                 [activeRange]: res.data,
                               },
                             }));
@@ -259,7 +263,7 @@ export function CoinDetailSheet() {
                     isPending || isLoadingChart ? "opacity-40" : "opacity-100",
                   )}
                 >
-                  <CoinPriceChart data={priceSeries} height={208} />
+                  <CoinPriceChart data={priceSeries} height={208} currency={currency} />
                 </div>
               ) : (
                 <Skeleton className="h-[208px] w-full rounded-lg" />
@@ -293,11 +297,11 @@ export function CoinDetailSheet() {
             <div className="flex items-center justify-between text-xs font-mono">
               <div className="text-left">
                 <span className="text-muted-foreground text-[11px] block">Low</span>
-                <span className="font-medium">{formatUsd(low24h)}</span>
+                <span className="font-medium">{formatCurrency(low24h, currency)}</span>
               </div>
               <div className="text-right">
                 <span className="text-muted-foreground text-[11px] block">High</span>
-                <span className="font-medium">{formatUsd(high24h)}</span>
+                <span className="font-medium">{formatCurrency(high24h, currency)}</span>
               </div>
             </div>
           </div>
@@ -309,7 +313,7 @@ export function CoinDetailSheet() {
                 Market Cap
               </p>
               <p className="mt-1 font-heading text-base font-semibold tabular-nums">
-                {formatCompactUsd(selectedCoin.market_cap)}
+                {formatCompactCurrency(selectedCoin.market_cap, currency)}
               </p>
               <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
                 Rank #{selectedCoin.market_cap_rank ?? "-"}
@@ -321,7 +325,7 @@ export function CoinDetailSheet() {
                 24h Volume
               </p>
               <p className="mt-1 font-heading text-base font-semibold tabular-nums">
-                {formatCompactUsd(selectedCoin.total_volume)}
+                {formatCompactCurrency(selectedCoin.total_volume, currency)}
               </p>
               <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
                 Vol / MCap:{" "}
@@ -337,7 +341,7 @@ export function CoinDetailSheet() {
               </p>
               <p className="mt-1 font-heading text-base font-semibold tabular-nums">
                 {selectedCoin.fully_diluted_valuation
-                  ? formatCompactUsd(selectedCoin.fully_diluted_valuation)
+                  ? formatCompactCurrency(selectedCoin.fully_diluted_valuation, currency)
                   : "N/A"}
               </p>
               <p className="mt-0.5 text-[10px] text-muted-foreground">
@@ -350,7 +354,7 @@ export function CoinDetailSheet() {
                 Circulating Supply
               </p>
               <p className="mt-1 font-heading text-base font-semibold tabular-nums truncate">
-                {formatCompactUsd(selectedCoin.circulating_supply).replace("$", "")}{" "}
+                {formatCompactNumber(selectedCoin.circulating_supply)}{" "}
                 <span className="text-xs font-mono uppercase text-muted-foreground">
                   {selectedCoin.symbol}
                 </span>
@@ -388,7 +392,7 @@ export function CoinDetailSheet() {
                 <span>
                   Max:{" "}
                   {maxSupply
-                    ? formatCompactUsd(maxSupply).replace("$", "")
+                    ? formatCompactNumber(maxSupply)
                     : "None"}{" "}
                   {selectedCoin.symbol.toUpperCase()}
                 </span>
@@ -417,7 +421,7 @@ export function CoinDetailSheet() {
                   </span>
                 </div>
                 <p className="font-heading text-lg font-semibold tabular-nums">
-                  {formatUsd(selectedCoin.ath)}
+                  {formatCurrency(selectedCoin.ath, currency)}
                 </p>
                 <p className="flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
                   <Calendar className="size-3" />
@@ -446,7 +450,7 @@ export function CoinDetailSheet() {
                   </span>
                 </div>
                 <p className="font-heading text-lg font-semibold tabular-nums">
-                  {formatUsd(selectedCoin.atl)}
+                  {formatCurrency(selectedCoin.atl, currency)}
                 </p>
                 <p className="flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
                   <Calendar className="size-3" />

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CurrencySelect } from "@/components/layout/currency-select";
 import { getActiveNavItem } from "@/config/navigation";
 
 export function AppHeader() {
@@ -68,6 +69,7 @@ export function AppHeader() {
       <Badge variant="outline" className="hidden sm:inline-flex">
         CoinGecko
       </Badge>
+      <CurrencySelect />
       <ThemeToggle />
     </header>
   );

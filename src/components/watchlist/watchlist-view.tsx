@@ -6,11 +6,12 @@ import { ArrowRight, RotateCcw, Star, TrendingDown, TrendingUp } from "lucide-re
 import type { CoinMarket } from "@/lib/coingecko";
 import {
   changeToneClass,
-  formatCompactUsd,
+  formatCompactCurrency,
   formatPercent,
-  formatUsd,
+  formatCurrency,
 } from "@/lib/format";
 import { useWatchlist } from "@/hooks/use-watchlist";
+import { useCurrency } from "@/context/currency-context";
 import { fetchWatchlistCoinsAction } from "@/actions/watchlist";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ import { MarketsTable } from "@/components/markets/markets-table";
 import { WatchlistSkeleton } from "@/components/watchlist/watchlist-skeleton";
 
 export function WatchlistView() {
+  const { currency } = useCurrency();
   const { watchlist, isLoaded } = useWatchlist();
   const [coins, setCoins] = useState<CoinMarket[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +44,7 @@ export function WatchlistView() {
     setIsLoading(true);
     setErrorMessage(null);
 
-    fetchWatchlistCoinsAction(watchlist).then((result) => {
+    fetchWatchlistCoinsAction(watchlist, currency).then((result) => {
       if (!isMounted) return;
       setIsLoading(false);
       if (result.success) {
@@ -55,7 +57,7 @@ export function WatchlistView() {
     return () => {
       isMounted = false;
     };
-  }, [watchlist, isLoaded]);
+  }, [watchlist, isLoaded, currency]);
 
   // Keep displayed coins in sync if an asset is unstarred
   const activeCoins = useMemo(() => {
@@ -136,7 +138,7 @@ export function WatchlistView() {
           variant="outline"
           onClick={() => {
             setIsLoading(true);
-            fetchWatchlistCoinsAction(watchlist).then((res) => {
+            fetchWatchlistCoinsAction(watchlist, currency).then((res) => {
               setIsLoading(false);
               if (res.success) setCoins(res.data);
             });
@@ -188,7 +190,7 @@ export function WatchlistView() {
                   <TrendingDown className="size-3" />
                 )}
                 {formatPercent(metrics.topGainer.price_change_percentage_24h ?? 0)}{" "}
-                · {formatUsd(metrics.topGainer.current_price)}
+                · {formatCurrency(metrics.topGainer.current_price, currency)}
               </p>
             </CardContent>
           </Card>
@@ -215,7 +217,7 @@ export function WatchlistView() {
             <CardHeader>
               <CardDescription>Tracked Market Cap</CardDescription>
               <CardTitle className="font-heading text-2xl tracking-tight tabular-nums">
-                {formatCompactUsd(metrics.totalTrackedCap)}
+                {formatCompactCurrency(metrics.totalTrackedCap, currency)}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -226,7 +228,7 @@ export function WatchlistView() {
       )}
 
       {/* Dedicated Watchlist Table */}
-      <MarketsTable coins={activeCoins} />
+      <MarketsTable coins={activeCoins} currency={currency} />
     </div>
   );
 }

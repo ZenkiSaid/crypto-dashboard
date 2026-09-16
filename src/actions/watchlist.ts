@@ -8,6 +8,7 @@ export type WatchlistActionResult =
 
 export async function fetchWatchlistCoinsAction(
   ids: string[],
+  vsCurrency: string = "usd",
 ): Promise<WatchlistActionResult> {
   if (!ids || ids.length === 0) {
     return { success: true, data: [] };
@@ -16,6 +17,7 @@ export async function fetchWatchlistCoinsAction(
   try {
     const coins = await getCoinsMarkets({
       ids,
+      vsCurrency,
       perPage: Math.min(ids.length, 100),
       sparkline: true,
     });

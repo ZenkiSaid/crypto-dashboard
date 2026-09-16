@@ -16,9 +16,10 @@ import {
 } from "recharts";
 import {
   formatChartTooltip,
-  formatCompactUsd,
+  formatCompactCurrency,
+  formatCurrency,
   formatSharePercent,
-  formatUsd,
+  type Currency,
 } from "@/lib/format";
 
 const tooltipStyle = {
@@ -92,9 +93,11 @@ function ChartFrame({
 export function BitcoinPriceChart({
   data,
   height = 256,
+  currency = "usd",
 }: {
   data: PriceSeriesPoint[];
   height?: number;
+  currency?: Currency;
 }) {
   const gradientId = useId().replace(/:/g, "");
 
@@ -127,7 +130,7 @@ export function BitcoinPriceChart({
             axisLine={false}
             width={64}
             tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-            tickFormatter={(value: number) => formatCompactUsd(value)}
+            tickFormatter={(value: number) => formatCompactCurrency(value, currency)}
             domain={["auto", "auto"]}
           />
           <Tooltip
@@ -135,9 +138,9 @@ export function BitcoinPriceChart({
             contentStyle={tooltipStyle}
             labelFormatter={(_, payload) => {
               const point = payload[0]?.payload as PriceSeriesPoint | undefined;
-              return point ? formatChartTooltip(point.timestamp) : "";
+              return point ? formatChartTooltip(point.timestamp, point.price, currency) : "";
             }}
-            formatter={(value) => [formatUsd(Number(value)), "Price"]}
+            formatter={(value) => [formatCurrency(Number(value), currency), "Price"]}
           />
           <Area
             type="monotone"
@@ -153,7 +156,13 @@ export function BitcoinPriceChart({
   );
 }
 
-export function VolumeLeadersChart({ data }: { data: VolumeSeriesPoint[] }) {
+export function VolumeLeadersChart({
+  data,
+  currency = "usd",
+}: {
+  data: VolumeSeriesPoint[];
+  currency?: Currency;
+}) {
   return (
     <ChartFrame>
       {(width) => (
@@ -170,7 +179,7 @@ export function VolumeLeadersChart({ data }: { data: VolumeSeriesPoint[] }) {
             tickLine={false}
             axisLine={false}
             tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-            tickFormatter={(value: number) => formatCompactUsd(value)}
+            tickFormatter={(value: number) => formatCompactCurrency(value, currency)}
           />
           <YAxis
             type="category"
@@ -183,7 +192,7 @@ export function VolumeLeadersChart({ data }: { data: VolumeSeriesPoint[] }) {
           <Tooltip
             cursor={{ fill: "var(--muted)" }}
             contentStyle={tooltipStyle}
-            formatter={(value) => [formatCompactUsd(Number(value)), "Volume"]}
+            formatter={(value) => [formatCompactCurrency(Number(value), currency), "Volume"]}
           />
           <Bar dataKey="volume" fill="var(--color-chart-2)" radius={[0, 6, 6, 0]} />
         </BarChart>

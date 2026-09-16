@@ -4,7 +4,12 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { ArrowDown, ArrowUp, Search, X } from "lucide-react";
 import type { CoinMarket } from "@/lib/coingecko";
-import { changeToneClass, formatPercent, formatUsd } from "@/lib/format";
+import {
+  changeToneClass,
+  formatCurrency,
+  formatPercent,
+  type Currency,
+} from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,9 +24,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { FavoriteButton } from "@/components/watchlist/favorite-button";
 import { useCoinDetail } from "@/context/coin-detail-context";
+import { useCurrency } from "@/context/currency-context";
 
 export type TopMarketsCardProps = {
   coins: CoinMarket[];
+  currency?: Currency;
 };
 
 type SortField = "market_cap" | "price" | "change_24h";
@@ -33,8 +40,10 @@ const SORT_OPTIONS: { field: SortField; label: string }[] = [
   { field: "change_24h", label: "24h %" },
 ];
 
-export function TopMarketsCard({ coins }: TopMarketsCardProps) {
+export function TopMarketsCard({ coins, currency }: TopMarketsCardProps) {
   const { openCoinDetail } = useCoinDetail();
+  const { currency: contextCurrency } = useCurrency();
+  const activeCurrency = currency ?? contextCurrency;
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("market_cap");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -88,7 +97,7 @@ export function TopMarketsCard({ coins }: TopMarketsCardProps) {
           </CardDescription>
         </div>
         <CardAction>
-          <Badge variant="secondary">USD</Badge>
+          <Badge variant="secondary">{activeCurrency.toUpperCase()}</Badge>
         </CardAction>
       </CardHeader>
 
@@ -179,7 +188,7 @@ export function TopMarketsCard({ coins }: TopMarketsCardProps) {
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-sm font-medium tabular-nums">
-                      {formatUsd(coin.current_price)}
+                      {formatCurrency(coin.current_price, activeCurrency)}
                     </p>
                     <p
                       className={cn(

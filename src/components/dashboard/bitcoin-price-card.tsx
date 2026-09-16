@@ -8,8 +8,9 @@ import {
   type MarketChart,
   type TimeRange,
 } from "@/lib/coingecko";
-import { formatChartTick, formatUsd } from "@/lib/format";
+import { formatChartTick, formatCurrency, type Currency } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useCurrency } from "@/context/currency-context";
 import { fetchMarketChartAction } from "@/actions/market-chart";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,13 +27,17 @@ export type BitcoinPriceCardProps = {
   initialChart: MarketChart;
   initialRange: TimeRange;
   bitcoin?: CoinMarket;
+  currency?: Currency;
 };
 
 export function BitcoinPriceCard({
   initialChart,
   initialRange,
   bitcoin,
+  currency,
 }: BitcoinPriceCardProps) {
+  const { currency: contextCurrency } = useCurrency();
+  const activeCurrency = currency ?? contextCurrency;
   const [activeRange, setActiveRange] = useState<TimeRange>(initialRange);
   const [cache, setCache] = useState<Partial<Record<TimeRange, MarketChart>>>(
     () => ({
@@ -71,7 +76,11 @@ export function BitcoinPriceCard({
     // Otherwise fetch via Server Action in a transition
     setPendingRange(range);
     startTransition(async () => {
-      const result = await fetchMarketChartAction("bitcoin", range);
+      const result = await fetchMarketChartAction(
+        "bitcoin",
+        range,
+        activeCurrency,
+      );
 
       if (result.success) {
         setCache((prev) => ({ ...prev, [range]: result.data }));
@@ -102,7 +111,7 @@ export function BitcoinPriceCard({
           <CardTitle>Bitcoin price</CardTitle>
           <CardDescription>
             {bitcoin
-              ? `${formatUsd(bitcoin.current_price)} · last ${activeRange}`
+              ? `${formatCurrency(bitcoin.current_price, activeCurrency)} · last ${activeRange}`
               : `Interactive series · last ${activeRange}`}
           </CardDescription>
           {errorMessage && (
@@ -146,7 +155,7 @@ export function BitcoinPriceCard({
               isPending ? "opacity-40" : "opacity-100",
             )}
           >
-            <BitcoinPriceChart data={priceSeries} />
+            <BitcoinPriceChart data={priceSeries} currency={activeCurrency} />
           </div>
 
           {isPending && (

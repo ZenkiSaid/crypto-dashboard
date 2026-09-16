@@ -89,15 +89,21 @@ function ChartFrame({
   );
 }
 
-export function BitcoinPriceChart({ data }: { data: PriceSeriesPoint[] }) {
+export function BitcoinPriceChart({
+  data,
+  height = 256,
+}: {
+  data: PriceSeriesPoint[];
+  height?: number;
+}) {
   const gradientId = useId().replace(/:/g, "");
 
   return (
-    <ChartFrame>
+    <ChartFrame height={height}>
       {(width) => (
         <AreaChart
           width={width}
-          height={256}
+          height={height}
           data={data}
           margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
         >
@@ -238,3 +244,5 @@ export function MarketDominanceChart({ data }: { data: DominanceSlice[] }) {
     </div>
   );
 }
+
+export const CoinPriceChart = BitcoinPriceChart;

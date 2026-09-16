@@ -31,6 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Sparkline } from "@/components/markets/sparkline";
 import { FavoriteButton } from "@/components/watchlist/favorite-button";
+import { useCoinDetail } from "@/context/coin-detail-context";
 
 export type MarketsTableProps = {
   coins: CoinMarket[];
@@ -48,6 +49,7 @@ type SortColumn =
 type SortDirection = "asc" | "desc";
 
 export function MarketsTable({ coins }: MarketsTableProps) {
+  const { openCoinDetail } = useCoinDetail();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn>("rank");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -312,7 +314,8 @@ export function MarketsTable({ coins }: MarketsTableProps) {
                   return (
                     <tr
                       key={coin.id}
-                      className="hover:bg-muted/40 transition-colors"
+                      onClick={() => openCoinDetail(coin)}
+                      className="hover:bg-muted/40 cursor-pointer transition-colors"
                     >
                       {/* Watchlist Favorite Toggle */}
                       <td className="py-3.5 pl-3 pr-1 text-center">

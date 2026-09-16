@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FavoriteButton } from "@/components/watchlist/favorite-button";
+import { useCoinDetail } from "@/context/coin-detail-context";
 
 export type TopMarketsCardProps = {
   coins: CoinMarket[];
@@ -33,6 +34,7 @@ const SORT_OPTIONS: { field: SortField; label: string }[] = [
 ];
 
 export function TopMarketsCard({ coins }: TopMarketsCardProps) {
+  const { openCoinDetail } = useCoinDetail();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("market_cap");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -151,7 +153,8 @@ export function TopMarketsCard({ coins }: TopMarketsCardProps) {
               return (
                 <li
                   key={coin.id}
-                  className="hover:bg-muted/40 -mx-2 flex items-center gap-2 rounded-lg px-2 py-2 transition-colors first:pt-1 last:pb-0"
+                  onClick={() => openCoinDetail(coin)}
+                  className="hover:bg-muted/40 -mx-2 flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 transition-colors first:pt-1 last:pb-0"
                 >
                   <FavoriteButton coinId={coin.id} coinName={coin.name} size="icon-xs" />
                   <Image

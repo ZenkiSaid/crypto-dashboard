@@ -7,6 +7,11 @@ import { MarketsSkeleton } from "@/components/markets/markets-skeleton";
 
 export const revalidate = 60;
 
+export const metadata = {
+  title: "Crypto Markets",
+  description: "Live prices, volume, market cap, and 7-day trajectories for top cryptocurrencies.",
+};
+
 export default async function MarketsPage() {
   const cookieStore = await cookies();
   const rawCurrency = cookieStore.get("crypto_currency")?.value;

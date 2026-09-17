@@ -15,6 +15,7 @@ import {
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CurrencySelect } from "@/components/layout/currency-select";
+import { CryptoConverterModal } from "@/components/converter/crypto-converter-modal";
 import { getActiveNavItem } from "@/config/navigation";
 
 export function AppHeader() {
@@ -69,6 +70,7 @@ export function AppHeader() {
       <Badge variant="outline" className="hidden sm:inline-flex">
         CoinGecko
       </Badge>
+      <CryptoConverterModal />
       <CurrencySelect />
       <ThemeToggle />
     </header>
